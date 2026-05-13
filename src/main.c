@@ -62,6 +62,38 @@ char *lsh_read(void){
 
 #define LSH_TOKEN_BUFSIZE 64
 #define LSH_TOKEN_DELIM " \t\r\n"   // space - tab - enter - new line
+char **lsh_split(char *line){
+    int bufsize = LSH_TOKEN_BUFSIZE, position = 0;
+    char **tokens = malloc(bufsize * sizeof(char*));
+    char *token;
+
+    if (!tokens) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    token = strtok(line,LSH_TOKEN_DELIM);   
+    // strtok is a function to split strings into tokens strtok(string_to_define, delimiter)
+    while (!token) {
+        tokens[position] = token;
+        position++;
+
+        if (position >= bufsize) {
+            bufsize += LSH_TOKEN_BUFSIZE;
+            tokens = realloc(tokens, bufsize * sizeof(char*));
+            if (!tokens) {
+                fprintf(stderr, "lsh: allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+            
+        }
+        
+        token = strtok(NULL, LSH_TOKEN_DELIM);  // pick up from the separator/delim of the string used before
+    }
+    
+    tokens[position] = NULL;
+    return tokens;
+}
 
 int main(int argc, char **argv){
     // load config files, if any
