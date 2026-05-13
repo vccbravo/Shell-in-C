@@ -4,6 +4,54 @@
 #include <stdio.h>
 #include <string.h>
 
+// Function declarations for builtin shell commands
+int lsh_cd(char **args);
+int lsh_help(char **args);
+int lsh_exit(char **args);
+
+// List of builtin commands
+char *builtin_str[] = {
+    "cd", "help", "exit"
+};
+
+// List of builtin function
+char (*builtin_func[]) (char **) = {
+    &lsh_cd, &lsh_help, &lsh_exit
+};
+
+int lsh_num_builtins() {
+    return sizeof(builtin_str) / sizeof(char *);
+}
+
+// Builtin function implementations
+int lsh_cd(char **args) {
+    if (args[1] == NULL) {
+        fprintf(stderr, "lsh: expected argument to \"cd\"n");
+    } else {
+        if (chdir(args[1]) != 0) {
+            perror("lsh");
+        }
+        
+    }
+    
+    return 1;
+}
+
+int lsh_help(char **args) {
+    printf("Type program names and arguments and hit enter\n");
+    printf("Built in functions:\n");
+
+    for (int i = 0; i < lsh_num_builtins; i++) {
+        printf(" %s\n", builtin_str[i]);
+    }
+    
+    // man command uses execvp to run man
+    printf("Use the man command for information on other programs\n");
+    return 1;
+}
+
+int lsh_exit(char **args) {return 0;}
+
 void lsh_loop(void){
     char *line;
     char **args;
@@ -12,7 +60,7 @@ void lsh_loop(void){
     do{
         printf("> ");
         line = lsh_read();
-        args = lsh_split();
+        args = lsh_split(line);
         status = lsh_execute(args);
 
         free(line);
