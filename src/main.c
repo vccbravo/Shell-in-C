@@ -23,7 +23,7 @@ char *builtin_str[] = {
 };
 
 // List of builtin function
-char (*builtin_func[]) (char **) = {
+int (*builtin_func[]) (char **) = {
     &lsh_cd, &lsh_help, &lsh_exit
 };
 
@@ -34,7 +34,7 @@ int lsh_num_builtins() {
 // Builtin function implementations
 int lsh_cd(char **args) {
     if (args[1] == NULL) {
-        fprintf(stderr, "lsh: expected argument to \"cd\"n");
+        fprintf(stderr, "lsh: expected argument to \"cd\"\n");
     } else {
         if (chdir(args[1]) != 0) {
             perror("lsh");
@@ -49,7 +49,7 @@ int lsh_help(char **args) {
     printf("Type program names and arguments and hit enter\n");
     printf("Built in functions:\n");
 
-    for (int i = 0; i < lsh_num_builtins; i++) {
+    for (int i = 0; i < lsh_num_builtins(); i++) {
         printf(" %s\n", builtin_str[i]);
     }
     
@@ -60,21 +60,6 @@ int lsh_help(char **args) {
 
 int lsh_exit(char **args) {return 0;}
 
-void lsh_loop(void){
-    char *line;
-    char **args;
-    int status;
-
-    do{
-        printf("> ");
-        line = lsh_read();
-        args = lsh_split(line);
-        status = lsh_execute(args);
-
-        free(line);
-        free(status);
-    } while (status);
-}
 
 #define LSH_RL_BUFSIZE 1024
 char *lsh_read(void){
@@ -93,7 +78,7 @@ char *lsh_read(void){
         c = getchar();
 
         // If we hit EOF, replace it with a nul character and return
-        if (c == EOF || c == '\0') {
+        if (c == EOF || c == '\n') {
             buffer[position] = '\0';
             return buffer;
         } else {
@@ -130,7 +115,7 @@ char **lsh_split(char *line){
     
     token = strtok(line,LSH_TOKEN_DELIM);   
     // strtok is a function to split strings into tokens strtok(string_to_define, delimiter)
-    while (!token) {
+    while (token) {
         tokens[position] = token;
         position++;
 
@@ -182,7 +167,7 @@ int lsh_execute(char **args) {
         return 1;
     }
     
-    for (int i = 0; i < lsh_num_builtins; i++) {
+    for (int i = 0; i < lsh_num_builtins(); i++) {
         if (strcmp(args[0], builtin_str[i]) == 0) {
             return (*builtin_func[i])(args);
         }
@@ -190,6 +175,25 @@ int lsh_execute(char **args) {
     }
     
     return lsh_launch(args);
+}
+
+#define PATH_MAX 4096
+void lsh_loop(void){
+    char *line;
+    char **args;
+    int status;
+    char path[PATH_MAX];
+
+    do{
+        getcwd(path, sizeof(path));
+        printf("%s > ", path);
+        line = lsh_read();
+        args = lsh_split(line);
+        status = lsh_execute(args);
+
+        free(line);
+        free(args);
+    } while (status);
 }
 
 int main(int argc, char **argv){
