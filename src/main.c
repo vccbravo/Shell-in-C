@@ -60,6 +60,9 @@ char *lsh_read(void){
     
 }
 
+#define LSH_TOKEN_BUFSIZE 64
+#define LSH_TOKEN_DELIM " \t\r\n"   // space - tab - enter - new line
+
 int main(int argc, char **argv){
     // load config files, if any
 
